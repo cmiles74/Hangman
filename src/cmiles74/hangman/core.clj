@@ -1,8 +1,10 @@
-(ns cmiles74.hangman.core
+(ns ^{:doc "Provides an application that plays a game of Hangman
+against the computer (that is, this game is not interactive)."}
+  cmiles74.hangman.core
   (:gen-class)
   (:use [clojure.tools.logging])
   (:require [clojure.string :as string]
-            [cmiles74.hangman.frequencystrategy :as freq])
+            [cmiles74.hangman.frequencystrategy :only guess :as freq])
   (:import [java.util Date Random]
            [org.apache.commons.logging LogFactory]
            [org.apache.commons.logging Log]))
@@ -47,7 +49,10 @@
     dictionary  A sequence of possible answer words
     game  A map of the current game state"
   [strategy dictionary game]
-  (let [guess (strategy dictionary game)
+  (let [;; get the computer's next guess
+        guess (strategy dictionary game)
+
+        ;; decide if this guess is good or bad
         good (cond
                (= :letter (first guess))
                (if ((into #{} (:solution game)) (nth guess 1))
@@ -57,9 +62,13 @@
                (if (= (apply str (:solution game)) (second guess))
                  true))]
 
+    ;; return a new game state
     (merge game
            {:score (inc (:score game))}
+
            (if (not good)
+
+             ;; incorrect guess
              (cond
                (= :letter (first guess))
                {:incorrect-guessed (conj (:incorrect-guessed game) (nth guess 1))}
@@ -68,6 +77,7 @@
                {:incorrect-words-guessed (conj (:incorrect-words-guessed game)
                                                (last guess))})
 
+             ;; correct guess
              (cond
                (= :letter (first guess))
                {:correct-guessed (vec (map #(if (= (nth (:solution game) %)
@@ -95,9 +105,6 @@
            (count (:incorrect-words-guessed game))))
     (assoc game :status :lost GAME-STATUS)
 
-    (<= (:max-wrong-guesses game) (:score game))
-    (assoc game :status (:lost GAME-STATUS))
-
     :else
     (assoc game :status (:guessing GAME-STATUS))))
 
@@ -115,7 +122,7 @@
   guesses.
 
     strategy  A function that guesses by word or letter
-    dictionary  A dictionary of possible solution words
+    dictionary  A sequence of possible solution words
     game  A map of the current game state
 
   The behavior of this function may be customized with the following
@@ -123,13 +130,19 @@
 
     :output  Display progress on screen or to the log; :log, :console"
   [strategy dictionary game & {:keys [output] :or {output :log}}]
+
+  ;; play each game to completion
   (loop [game-this game]
+
+    ;; update the status of the current game state
     (let [game-now (update-status game-this)]
 
+      ;; log the progress of the current game
       (if (= :log output)
         (info (print-game game-now))
         (println (print-game game-now)))
 
+      ;; game in progress, recur with the next game state
       (if (= (:guessing GAME-STATUS) (:status game-now))
         (recur (process-turn strategy dictionary game-now))
         game-now))))

@@ -1,12 +1,19 @@
-(ns cmiles74.hangman.frequencystrategy
+(ns ^{:doc "Provides a strategy for playing Hangman based on the
+  frequency with which letters appear in possible solution words. To
+  utilize this strategy, import the \"guess\" function."}
+  cmiles74.hangman.frequencystrategy
   (:import [java.util Date Random]))
 
 ;; random number generator
 (def random (Random. (.getTime (Date.))))
 
-(defn letter-frequency
+(defn- letter-frequency
   "Computes the frequency each letter appears in the dictionary words
-  for the specified position."
+  for the specified position.
+
+    dictionary  A sequence of solution words
+    position  The letter position of the solution for which frequencies
+      will be calculated"
   [dictionary position]
 
   ;; retrieve all of the letters at the given position
@@ -38,27 +45,47 @@
                  (assoc frequency letter-this (inc (frequency letter-this)))
                  (assoc frequency letter-this 1)))
 
-        ;; sort our frequencies by value
+        ;; sort our frequencies by value (most popular first)
         (sort #(compare (last %2) (last %1))
               frequency)))))
 
-(defn word-matches
-  "Returns true if the provided word matches the specified criteria."
+(defn- word-matches
+  "Returns true if the provided word matches the specified criteria.
+
+    criteria  A sequence representing the current criteria, i.e.
+      \"[nil nil l l nil]\"
+    word  The word that will be validated against the criteria"
   [criteria word]
+
+  ;; they need to be the same length
   (and (= (count word) (count criteria))
        (every? #(= true %)
+
+               ;; match each word letter against its matching criteria
+               ;; position
                (map #(or (nil? (nth criteria %))
                          (= (nth criteria %) (nth word %)))
                     (range (count criteria))))))
 
-(defn query-words
+(defn- query-words
   "Returns a sequence of words in the provided dictionary that match
-  the specified criteria."
+  the specified criteria.
+
+    dictionary  A sequence of solution words
+    criteria  A sequence representing the current criteria, i.e.
+      \"[nil nil l l nil]\""
   [dictionary criteria]
   (filter #(word-matches criteria %) dictionary))
 
-(defn guess-letter
+(defn- guess-letter
+  "Returns a guess for a letter. The guess will be a sequence where
+  the first item is they keyword :letter and the second item is the
+  letter being guessed. For example {:letter \"m\"}
+
+    dictionary  A sequence of solution words
+    game  A map of the current game state"
   [dictionary game]
+
   (let [;; calculate the letter frequencies for each position
         frequencies (map #(letter-frequency dictionary %)
                          (range (count (:solution game))))
@@ -93,10 +120,25 @@
     [:letter (nth (flatten (first best-guesses)) 1)]))
 
 (defn guess-word
-  [dictionary game]
-  [:word (nth dictionary (.nextInt random (count dictionary)))])
+  "Returns a guess for the whole word. The guess will be a sequence
+  where the first item is a the keyword :word and the second item is
+  the word being guessed. For example: {:word \"miles\"}
+
+    dictionary  A sequence of solution words
+    game  A map of the current game state"
+  [dictionary game] [:word (nth
+  dictionary (.nextInt random (count dictionary)))])
 
 (defn guess
+  "Returns a guess, the represents the computers turn in a game of
+  Hangman. This will be a sequence where the first item is a keyword
+  representing the type of guess (:letter or :word) and the second
+  item is the letter or word being guessed. For example:
+
+    {:letter \"m\"} or {:word \"miles\"}
+
+    dictionary  A sequence of solution words
+    game  A map of the current game state"
   [dictionary game]
   (let [candidate-words (query-words dictionary (:correct-guessed game))]
     (cond
