@@ -171,10 +171,13 @@ against the computer (that is, this game is not interactive)."}
                     (play-game freq/guess @*DICTIONARY* (game solution 25))))]
 
     ;; display some stats on our results
-    (let [average-score (float (/ (apply + (map :score games)) 15))]
+    (let [average-score (float (/ (apply + (pmap :score games)) 15))]
       (info "")
       (info "RESULTS")
-      (info "  Average score:" average-score))))
+      (info "  Average score:" average-score))
+
+    ;; shutdown any agents
+    (shutdown-agents)))
 
 (defn -main
   "Bootstraps the application"
