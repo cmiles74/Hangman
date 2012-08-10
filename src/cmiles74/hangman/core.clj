@@ -136,20 +136,29 @@
 
 (defn main
   [& args]
-  (info "Hello from Hangman!")
 
   ;; load in the dictionary
   (reset! *DICTIONARY* (load-dictionary "dictionary/words.txt"))
 
-  ;; play five random games
+  ;; play fifteen random games
+  (info "Playing 15 random games of hangman...")
   (let [random (Random. (.getTime (Date.)))
+
+        ;; our randomly chosen solutions
         solutions (for [index (range 15)]
                     (nth @*DICTIONARY* (.nextInt random (count @*DICTIONARY*))))
+
+        ;; a sequence of our lazily computed games
         games (for [solution solutions]
-                (do (info "SOLUTION:" solution)
+                (do (info "")
+                    (info "SOLUTION:" solution)
                     (play-game freq/guess @*DICTIONARY* (game solution 25))))]
-    (info "RESULTS")
-    (info "Average score:" (float (/ (apply + (map :score games)) 15)))))
+
+    ;; display some stats on our results
+    (let [average-score (float (/ (apply + (map :score games)) 15))]
+      (info "")
+      (info "RESULTS")
+      (info "  Average score:" average-score))))
 
 (defn -main
   "Bootstraps the application"
