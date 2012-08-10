@@ -7,11 +7,4 @@
                                               javax.jms/jms
                                               com.sun.jdmk/jmxtools
                                               com.sun.jmx/jmxri]]]
-  :main cmiles74.hangman.core
-
-  ;; we're going to use our own repository mirror
-  :omit-default-repositories true
-  :repositories {"snapshots"
-                 "http://nexus.nervestaple.com/content/groups/public"
-                 "releases"
-                 "http://nexus.nervestaple.com/content/groups/public"})
+  :main cmiles74.hangman.core)

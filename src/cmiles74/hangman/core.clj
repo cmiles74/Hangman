@@ -65,7 +65,6 @@ against the computer (that is, this game is not interactive)."}
     ;; return a new game state
     (merge game
            {:score (inc (:score game))}
-
            (if (not good)
 
              ;; incorrect guess
@@ -97,14 +96,18 @@ against the computer (that is, this game is not interactive)."}
     game  A map of the current game state"
   [game]
   (cond
+
+    ;; won game
     (= (:solution game) (:correct-guessed game))
     (assoc game :status (:won GAME-STATUS))
 
+    ;; lost game
     (<= (:max-wrong-guesses game)
         (+ (count (:incorrect-guessed game))
            (count (:incorrect-words-guessed game))))
     (assoc game :status :lost GAME-STATUS)
 
+    ;; game in progress
     :else
     (assoc game :status (:guessing GAME-STATUS))))
 

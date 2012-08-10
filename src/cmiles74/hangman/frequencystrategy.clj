@@ -45,7 +45,7 @@
                  (assoc frequency letter-this (inc (frequency letter-this)))
                  (assoc frequency letter-this 1)))
 
-        ;; sort our frequencies by value (most popular first)
+        ;; sort our frequencies by value (most popular letter first)
         (sort #(compare (last %2) (last %1))
               frequency)))))
 
@@ -103,7 +103,7 @@
         good-indices (map #(if (not (nil? (nth (:correct-guessed game) %)))%)
                           (range (count (:solution game))))
 
-        ;; compile a list of best guesses for each position
+        ;; compile a list of best guesses for each letter position
         best-guesses (sort #(compare (last (second %2))
                                      (last (second %1)))
 
