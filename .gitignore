@@ -1,0 +1,5 @@
+archive
+interview-attachments
+target
+*.zip
+pom.xml
