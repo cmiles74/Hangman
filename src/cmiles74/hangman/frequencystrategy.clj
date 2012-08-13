@@ -7,7 +7,7 @@
 ;; random number generator
 (def random (Random. (.getTime (Date.))))
 
-(defn- letter-frequency
+(defn- letter-frequency-raw
   "Computes the frequency each letter appears in the dictionary words
   for the specified position.
 
@@ -49,7 +49,9 @@
         (sort #(compare (last %2) (last %1))
               frequency)))))
 
-(defn- word-matches
+(def letter-frequency (memoize letter-frequency-raw))
+
+(defn word-matches
   "Returns true if the provided word matches the specified criteria.
 
     criteria  A sequence representing the current criteria, i.e.
@@ -67,7 +69,7 @@
                          (= (nth criteria %) (nth word %)))
                     (range (count criteria))))))
 
-(defn- query-words
+(defn query-words-raw
   "Returns a sequence of words in the provided dictionary that match
   the specified criteria.
 
@@ -77,10 +79,13 @@
   [dictionary criteria]
   (filter #(word-matches criteria %) dictionary))
 
-(defn- guess-letter
+(def query-words (memoize query-words-raw))
+
+(defn guess-letter
   "Returns a guess for a letter. The guess will be a sequence where
-  the first item is they keyword :letter and the second item is the
-  letter being guessed. For example {:letter \"m\"}
+  the first item is they keyword :letterm the second item is the
+  letter being guessed and the last item is the position in the word
+  that is most likely to have the letter. For example {:letter \"m\" 1}
 
     dictionary  A sequence of solution words
     game  A map of the current game state"
@@ -114,10 +119,45 @@
                                           (map
                                            #(hash-map % (first (nth candidates %)))
                                            (range (count candidates))))
-                                   good-indices))]
+                                   good-indices))
 
-    ;; return our one best guess
-    [:letter (nth (flatten (first best-guesses)) 1)]))
+        ;; calculate which of our best guesses occur for more than one
+        ;; letter position
+        combined (loop [matches {}
+                        guess-this (first best-guesses)
+                        guesses (rest best-guesses)]
+
+                   ;; loop until we've checked all of our guesses
+                   (if (not (nil? guess-this))
+
+                     ;; update our map of letters to [[positions], score]
+                     (recur (merge matches
+                                   {(first (nth guess-this 1))
+                                    [(conj (if (matches (first (nth guess-this 1)))
+                                             (first (matches
+                                                     (first (nth guess-this 1))))
+                                             [])
+                                           (first guess-this))
+
+                                     ;; combine the scores
+                                     (+ (if (last (matches
+                                                   (first (nth guess-this 1))))
+                                          (last (matches (first (nth guess-this 1))))
+                                          0)
+                                        (last (nth guess-this 1)))]})
+                            (first guesses) (rest guesses))
+
+                     ;; return our map of combined guesses
+                     matches))
+
+        ;; sort our combined guesses by score
+        combined-sorted (sort #(compare (last (second %2)) (last (second %1)))
+                              combined)]
+
+    ;; return our best guess
+    [:letter
+     (first (first combined-sorted))
+     (first (second (first combined-sorted)))]))
 
 (defn guess-word
   "Returns a guess for the whole word. The guess will be a sequence
@@ -140,7 +180,9 @@
     dictionary  A sequence of solution words
     game  A map of the current game state"
   [dictionary game]
-  (let [candidate-words (query-words dictionary (:correct-guessed game))]
+  (let [candidate-words (query-words dictionary (:correct-guessed game))
+        letter-guess (guess-letter candidate-words game)]
+
     (cond
       (> 2 (count candidate-words))
       (guess-word candidate-words game)

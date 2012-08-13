@@ -159,9 +159,10 @@ against the computer (that is, this game is not interactive)."}
   ;; play fifteen random games
   (info "Playing 15 random games of hangman...")
   (let [random (Random. (.getTime (Date.)))
+        num-games 15
 
         ;; our randomly chosen solutions
-        solutions (for [index (range 15)]
+        solutions (for [index (range num-games)]
                     (nth @*DICTIONARY* (.nextInt random (count @*DICTIONARY*))))
 
         ;; a sequence of our lazily computed games
@@ -171,10 +172,14 @@ against the computer (that is, this game is not interactive)."}
                     (play-game freq/guess @*DICTIONARY* (game solution 25))))]
 
     ;; display some stats on our results
-    (let [average-score (float (/ (apply + (pmap :score games)) 15))]
+    (let [average-score (float (/ (apply + (pmap :score games)) num-games))
+          lost (reduce + (pmap #(if (= "GAME_LOST" (:status %)) 1 0) games))
+          won (- num-games lost)]
       (info "")
       (info "RESULTS")
-      (info "  Average score:" average-score))
+      (info "  Average score:" average-score)
+      (info "            Won:" won)
+      (info "           Lost:" lost))
 
     ;; shutdown any agents
     (shutdown-agents)))
