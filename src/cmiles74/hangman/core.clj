@@ -149,7 +149,7 @@ against the computer (that is, this game is not interactive)."}
 
   (let [dictionary (dict/load-dictionary "dictionary/words.txt")
         random (Random. (.getTime (Date.)))
-        num-games 1000
+        num-games 15
 
         ;; our randomly chosen solutions
         solutions (for [index (range num-games)]
