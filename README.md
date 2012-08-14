@@ -47,6 +47,12 @@ Once you have the project built, you may generate a new test run.
 	tantrum; score=11; status=GAME_WON
 	...
 
+You may also run the test suite with Leiningen's "test" target. In
+addition to testing the provided functions, it will run through
+fifteen test games and report the score for each as well as the
+average score.
+
+    $ lein test
 
 ## Strategies
 
@@ -70,3 +76,9 @@ The above function will play one game using the frequence guessing
 strategy, the supplied list of solution words in the "dictionary"
 variable and will play a game with the solution "factual" and will
 tolerate 25 incorrect answers.
+
+## Dictionaries
+
+Functions are provided for loading a dictionary of words from disk as
+well as for matching words against a provided criteria. All of these
+functions are in the "dictionary" namespace.
