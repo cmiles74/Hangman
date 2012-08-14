@@ -20,16 +20,13 @@
   ;; retrieve all of the letters at the given position
   (let [letters-in (sort
 
-                    ;; exclude any nil values
-                    (filter #(not (nil? %))
+                    ;; retrieve each letter in the supplied position
+                    ;; of each word
+                    (for [word dictionary :when (not (nil? word))]
 
-                            ;; retrieve each letter in the supplied
-                            ;; position of each word
-                            (for [word dictionary]
-
-                              ;; don't use words that aren't long enough
-                              (if (< position (count word))
-                                (nth word position)))))]
+                      ;; don't use words that aren't long enough
+                      (if (< position (count word))
+                        (nth word position))))]
 
     ;; compute the frequency for each letter
     (loop [letter-this (first letters-in)
