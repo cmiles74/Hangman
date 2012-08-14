@@ -2,9 +2,11 @@
 against the computer (that is, this game is not interactive)."}
   cmiles74.hangman.core
   (:gen-class)
-  (:use [clojure.tools.logging])
+  (:use [clojure.tools.logging]
+        [clojure.tools.cli])
   (:require [cmiles74.hangman.dictionary :as dict]
-            [cmiles74.hangman.frequencystrategy :only guess :as freq])
+            [cmiles74.hangman.frequencystrategy :only guess :as freq]
+            [clojure.string :as string])
   (:import [java.util Date Random]
            [org.apache.commons.logging LogFactory]
            [org.apache.commons.logging Log]))
@@ -144,36 +146,54 @@ against the computer (that is, this game is not interactive)."}
 
 (defn main
   [& args]
+  (let [[options args banner]
+        (cli args
+             ["-h" "--help" "Show usage information" :default false :flag true]
+             ["-d" "--dictionary" "Path to an alternative dictionary file"]
+             ["-n" "--number" "Number of random games to play" :default "15"]
+             ["-s" "--solutions" "A comma separated list of solutions"])]
+    (cond
+      (:help options)
+      (println banner)
 
-  (info "Playing 15 random games of hangman...")
+      :else
+      (let [random (Random. (.getTime (Date.)))
 
-  (let [dictionary (dict/load-dictionary "dictionary/words.txt")
-        random (Random. (.getTime (Date.)))
-        num-games 15
+            dict-path (if (:dictionary options) (:dictionary options)
+                          "dictionary/words.txt")
 
-        ;; our randomly chosen solutions
-        solutions (for [index (range num-games)]
-                    [index (nth dictionary (.nextInt random (count dictionary)))])
+            dictionary (dict/load-dictionary dict-path)
 
-        ;; a sequence of our lazily computed games
-        games (for [solution solutions]
-                (do (info "")
-                    (info (str "GAME #" (inc (first solution))))
-                    (info "SOLUTION:" (second solution))
-                    (play-game freq/guess dictionary
-                               (game (second solution) 25)
-                               :output :log)))
+            solution-words (if (:solutions options)
+                             (string/split (:solutions options) #","))
 
-        ;; compute some stats on the games
-        average-score (float (/ (apply + (pmap :score games)) num-games))
-        lost (reduce + (pmap #(if (= "GAME_LOST" (:status %)) 1 0) games))
-        won (- num-games lost)]
+            solutions (if solution-words
+                        (for [index (range (count solution-words))]
+                          [index (nth solution-words
+                                      (.nextInt random (count solution-words)))])
+                        (for [index (range (Integer/parseInt (:number options)))]
+                          [index (nth dictionary
+                                      (.nextInt random (count dictionary)))]))
 
-    ;; display some stats on the games
-    (info "RESULTS")
-    (info "  Average score:" average-score)
-    (info "            Won:" won)
-    (info "           Lost:" lost))
+            ;; a sequence of our lazily computed games
+            games (for [solution solutions]
+                    (do (info "")
+                        (info (str "GAME #" (inc (first solution))))
+                        (info "SOLUTION:" (second solution))
+                        (play-game freq/guess dictionary
+                                   (game (second solution) 25)
+                                   :output :log)))
+
+            ;; compute some stats on the games
+            average-score (float (/ (apply + (pmap :score games)) (count solutions)))
+            lost (reduce + (pmap #(if (= "GAME_LOST" (:status %)) 1 0) games))
+            won (- (count solutions) lost)]
+
+        ;; display some stats on the games
+        (info "RESULTS")
+        (info "  Average score:" average-score)
+        (info "            Won:" won)
+        (info "           Lost:" lost))))
 
   ;; shutdown the agent thread pool
   (shutdown-agents))
@@ -181,4 +201,4 @@ against the computer (that is, this game is not interactive)."}
 (defn -main
   "Bootstraps the application"
   [& args]
-  (main args))
+  (apply main args))
