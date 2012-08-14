@@ -102,6 +102,13 @@ strategy, the supplied list of solution words in the "dictionary"
 variable and will play a game with the solution "factual" and will
 tolerate 25 incorrect answers.
 
+Letter frequency data for a given dictionary is cached between runs,
+this strategy should get faster the more games that it plays. For
+instance, during one 15 game run on an averagely spiffy workstation
+this strategy took 1244ms for the longest game and 104ms for the
+quickest, averageing 419ms per game. For a run of 100 games, the
+shortest game completed in 49ms and on average games ran for 311ms.
+
 ## Dictionaries
 
 Functions are provided for loading a dictionary of words from disk as

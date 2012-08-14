@@ -56,7 +56,9 @@ against the computer (that is, this game is not interactive)."}
 
     ;; return a new game state
     (merge game
-           {:score (inc (:score game))}
+           {:score (inc (:score game))
+            :start-time (if (:start-time game) (:start-time game)
+                            (Date.))}
            (if (not good)
 
              ;; incorrect guess
@@ -142,7 +144,19 @@ against the computer (that is, this game is not interactive)."}
       ;; game in progress, recur with the next game state
       (if (= (:guessing GAME-STATUS) (:status game-now))
         (recur (process-turn strategy dictionary game-now))
-        game-now))))
+        (let [end-time (Date.)
+              run-time (- (.getTime end-time) (.getTime (:start-time game-now)))]
+
+          ;; log the our run time
+          (cond (= :log output)
+                (info (str "Run time: " run-time "ms"))
+
+                (= :console output)
+                (println (str "Run time: " run-time "ms")))
+
+          (merge game-now
+                 {:end-time end-time
+                  :run-time run-time}))))))
 
 (defn main
   [& args]
@@ -187,13 +201,19 @@ against the computer (that is, this game is not interactive)."}
             ;; compute some stats on the games
             average-score (float (/ (apply + (pmap :score games)) (count solutions)))
             lost (reduce + (pmap #(if (= "GAME_LOST" (:status %)) 1 0) games))
-            won (- (count solutions) lost)]
+            won (- (count solutions) lost)
+            total-run (apply + (map :run-time games))
+            average-run (float (/ (apply + (map :run-time games))
+                                  (count solutions)))
+            shortest-run (first (sort (map :run-time games)))]
 
         ;; display some stats on the games
         (info "RESULTS")
-        (info "  Average score:" average-score)
-        (info "            Won:" won)
-        (info "           Lost:" lost))))
+        (info "    Average score:" average-score)
+        (info "              Won:" won)
+        (info "             Lost:" lost)
+        (info (str "Average Time/Game:" average-run "ms"))
+        (info (str "    Shortest Game:" shortest-run "ms")))))
 
   ;; shutdown the agent thread pool
   (shutdown-agents))
