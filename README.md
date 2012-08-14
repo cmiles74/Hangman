@@ -46,10 +46,13 @@ Once you have the project built, you may generate a new test run.
 	tantru-; score=10; status=KEEP_GUESSING
 	tantrum; score=11; status=GAME_WON
 	...
-    RESULTS
-	  Average score: 7.9333334
-				Won: 15
-			   Lost: 0
+	Run time: 545ms
+	RESULTS
+		Average score: 8.933333
+				  Won: 15
+				 Lost: 0
+	Average Time/Game:419.13333ms
+		Shortest Game:104ms
 
 You can pass several command line parameters in order to customize the
 behavior of the application. You may specify your own dictionary of
