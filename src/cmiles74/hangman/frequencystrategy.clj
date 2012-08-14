@@ -96,44 +96,36 @@
     (if (seq best-guesses)
 
       (let [;; calculate which of our best guesses occur for more than
-            ;; one letter position
-            combined (loop [matches {}
-                            guess-this (first best-guesses)
-                            guesses (rest best-guesses)]
+            ;; one letter position and sort the best scores to the top
+            combined (sort #(compare (last (second %2)) (last (second %1)))
 
-                       ;; loop until we've checked all of our guesses
-                       (if (not (nil? guess-this))
+                           ;; reduce our guesses to one per letter
+                           ;; with a list of positions and one
+                           ;; combined score
+                           (reduce
+                            (fn [matches guess]
+                              (merge matches
+                                     {;; the letter
+                                      (first (nth guess 1))
 
-                         ;; update our map of letters to [[positions], score]
-                         (recur
-                          (merge matches
-                                 {;; the letter
-                                  (first (nth guess-this 1))
+                                      ;; positions where this letter appears
+                                      [(conj (if (matches (first (nth guess 1)))
+                                               (first (matches
+                                                       (first (nth guess 1))))
+                                               [])
+                                             (first guess))
 
-                                  ;; positions where this letter appears
-                                  [(conj (if (matches (first (nth guess-this 1)))
-                                           (first (matches (first
-                                                            (nth guess-this 1))))
-                                           [])
-                                         (first guess-this))
-
-                                   ;; the score for this letter in all positions
-                                   (+ (if (last (matches (first (nth guess-this 1))))
-                                        (last (matches (first (nth guess-this 1))))
-                                        0)
-                                      (last (nth guess-this 1)))]})
-                          (first guesses) (rest guesses))
-
-                         ;; return our map of combined guesses
-                         matches))
-
-            ;; sort our combined guesses by score
-            combined-sorted (sort #(compare (last (second %2)) (last (second %1)))
-                                  combined)]
+                                       ;; the score for this letter
+                                       ;; in all positions
+                                       (+ (if (last (matches (first (nth guess 1))))
+                                            (last (matches (first (nth guess 1))))
+                                            0)
+                                          (last (nth guess 1)))]}))
+                            {} best-guesses))]
 
         ;; return our best guess
-        [:letter (first (first combined-sorted))
-         (first (second (first combined-sorted)))]))))
+        [:letter (first (first combined))
+         (first (second (first combined)))]))))
 
 (defn guess-word
   "Returns a guess for the whole word. The guess will be a sequence
