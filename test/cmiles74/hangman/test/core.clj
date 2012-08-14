@@ -90,5 +90,5 @@ and it's strategies."}
 
       (println "Average score:" average-score)
 
-      (is (and (every? #(= "GAME_WON" (:status %)) games)
+      (is (and (> 1 (count (filter #(= "GAME_LOST" (:status %)) games)))
                (> 8.7 average-score))))))

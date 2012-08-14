@@ -97,7 +97,8 @@ against the computer (that is, this game is not interactive)."}
 
     ;; lost game
     (<= (:max-wrong-guesses game) (:score game))
-    (assoc game :status (:lost GAME-STATUS))
+    (merge game {:status (:lost GAME-STATUS)
+                 :score 25})
 
     ;; game in progress
     :else
@@ -165,7 +166,8 @@ against the computer (that is, this game is not interactive)."}
              ["-h" "--help" "Show usage information" :default false :flag true]
              ["-d" "--dictionary" "Path to an alternative dictionary file"]
              ["-n" "--number" "Number of random games to play" :default "15"]
-             ["-s" "--solutions" "A comma separated list of solutions"])]
+             ["-s" "--solutions" "A comma separated list of solutions"]
+             ["-g" "--guesses" "Maximum number of guesses allowed" :default "9"])]
     (cond
       (:help options)
       (println banner)
@@ -189,13 +191,15 @@ against the computer (that is, this game is not interactive)."}
                           [index (nth dictionary
                                       (.nextInt random (count dictionary)))]))
 
+            guesses (Integer/parseInt (:guesses options))
+
             ;; a sequence of our lazily computed games
             games (for [solution solutions]
                     (do (info "")
                         (info (str "GAME #" (inc (first solution))))
                         (info "SOLUTION:" (second solution))
                         (play-game freq/guess dictionary
-                                   (game (second solution) 25)
+                                   (game (second solution) guesses)
                                    :output :log)))
 
             ;; compute some stats on the games
@@ -212,8 +216,8 @@ against the computer (that is, this game is not interactive)."}
         (info "    Average score:" average-score)
         (info "              Won:" won)
         (info "             Lost:" lost)
-        (info (str "Average Time/Game:" average-run "ms"))
-        (info (str "    Shortest Game:" shortest-run "ms")))))
+        (info (str "Average Time/Game: " average-run "ms"))
+        (info (str "    Shortest Game: " shortest-run "ms")))))
 
   ;; shutdown the agent thread pool
   (shutdown-agents))

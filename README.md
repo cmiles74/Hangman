@@ -69,6 +69,7 @@ The incovation above will play two games, one for "house" and one for
 * "-h" or "--help" will provide usage information
 * "-d" or "--dictionary" let you set the path to the word dictionary
 * "-n" or "--number" allows you to specify the number of games to play
+* "-g" or "--guesses" sets the maximum wrong guesses allowed
 * "-s" or "--solutions" lets you provide a comma separated list of
   solutions
 
