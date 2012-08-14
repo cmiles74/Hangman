@@ -28,24 +28,17 @@
                       (if (< position (count word))
                         (nth word position))))]
 
-    ;; compute the frequency for each letter
-    (loop [letter-this (first letters-in)
-           letters letters-in
-           frequency {}]
+    ;; compute the frequency for each letter and sort our highest
+    ;; scores to the top
+    (sort #(compare (last %2) (last %1))
 
-      ;; recur with our results if we have more letters
-      (if (not (nil? letter-this))
-        (recur (first (rest letters))
-               (rest letters)
-
-               ;; update the frequence map for this letter
-               (if (not (nil? (frequency letter-this)))
-                 (assoc frequency letter-this (inc (frequency letter-this)))
-                 (assoc frequency letter-this 1)))
-
-        ;; sort our frequencies by value (most popular letter first)
-        (sort #(compare (last %2) (last %1))
-              frequency)))))
+          ;; reduce our frequencies to map where the letter is the key
+          ;; and the score is the value
+          (reduce (fn [frequency letter]
+                    (if (not (nil? (frequency letter)))
+                      (assoc frequency letter (inc (frequency letter)))
+                      (assoc frequency letter 1)))
+                  {} letters-in))))
 
 (def letter-frequency (memoize letter-frequency-raw))
 
