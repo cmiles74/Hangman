@@ -3,7 +3,7 @@ against the computer (that is, this game is not interactive)."}
   cmiles74.hangman.core
   (:gen-class)
   (:use [clojure.tools.logging])
-  (:require [clojure.string :as string]
+  (:require [cmiles74.hangman.dictionary :as dict]
             [cmiles74.hangman.frequencystrategy :only guess :as freq])
   (:import [java.util Date Random]
            [org.apache.commons.logging LogFactory]
@@ -12,20 +12,10 @@ against the computer (that is, this game is not interactive)."}
 ;; logger instance
 (def LOGGER (. LogFactory getLog "cmiles74.hangman.core"))
 
-(def ^:dynamic *DICTIONARY* (atom []))
-
 ;; game status values
 (def GAME-STATUS {:won "GAME_WON"
                   :lost "GAME_LOST"
                   :guessing "KEEP_GUESSING"})
-
-(defn load-dictionary
-  "Loads in a list of words from the line delimited dictionary file at
-  the provided file and returns a sequence of those words.
-
-    path  A String representation of a file system path"
-  [path]
-  (string/split (slurp path) #"\s+"))
 
 (defn game
   "Returns a map representing a new game."
@@ -36,7 +26,7 @@ against the computer (that is, this game is not interactive)."}
    :max-wrong-guesses max-wrong-guesses
    :incorrect-guessed #{}
    :correct-guessed (vec (for [index (range (count solution))] nil))
-   :incorrect-words-guessed []})
+   :incorrect-words-guessed #{}})
 
 
 (defn process-turn
@@ -49,7 +39,7 @@ against the computer (that is, this game is not interactive)."}
     dictionary  A sequence of possible answer words
     game  A map of the current game state"
   [strategy dictionary game]
-  (let [;; get the computer's next guess
+  (let [;; calculate the computer's next guess
         guess (strategy dictionary game)
 
         ;; decide if this guess is good or bad
@@ -93,7 +83,7 @@ against the computer (that is, this game is not interactive)."}
   provided game. That is, if the game has been won, lost or is still
   in progress.
 
-    game  A map of the current game state"
+    game  A map of the game state"
   [game]
   (cond
 
@@ -102,17 +92,17 @@ against the computer (that is, this game is not interactive)."}
     (assoc game :status (:won GAME-STATUS))
 
     ;; lost game
-    (<= (:max-wrong-guesses game)
-        (+ (count (:incorrect-guessed game))
-           (count (:incorrect-words-guessed game))))
-    (assoc game :status :lost GAME-STATUS)
+    (<= (:max-wrong-guesses game) (:score game))
+    (assoc game :status (:lost GAME-STATUS))
 
     ;; game in progress
     :else
     (assoc game :status (:guessing GAME-STATUS))))
 
 (defn print-game
-  "Returns a String representation of the provided game map."
+  "Returns a String representation of the provided game map.
+
+    game  A map of game state"
   [game]
   (str (apply str (for [letter (:correct-guessed game)]
                     (if (nil? letter) "-" letter))) "; "
@@ -131,7 +121,7 @@ against the computer (that is, this game is not interactive)."}
   The behavior of this function may be customized with the following
   keys.
 
-    :output  Display progress on screen or to the log; :log, :console"
+    :output  Display progress on screen or to the log; :log, :console, nil"
   [strategy dictionary game & {:keys [output] :or {output :log}}]
 
   ;; play each game to completion
@@ -141,9 +131,11 @@ against the computer (that is, this game is not interactive)."}
     (let [game-now (update-status game-this)]
 
       ;; log the progress of the current game
-      (if (= :log output)
-        (info (print-game game-now))
-        (println (print-game game-now)))
+      (cond (= :log output)
+            (info (print-game game-now))
+
+            (= :console output)
+            (println (print-game game-now)))
 
       ;; game in progress, recur with the next game state
       (if (= (:guessing GAME-STATUS) (:status game-now))
@@ -153,36 +145,38 @@ against the computer (that is, this game is not interactive)."}
 (defn main
   [& args]
 
-  ;; load in the dictionary
-  (reset! *DICTIONARY* (load-dictionary "dictionary/words.txt"))
-
-  ;; play fifteen random games
   (info "Playing 15 random games of hangman...")
-  (let [random (Random. (.getTime (Date.)))
-        num-games 15
+
+  (let [dictionary (dict/load-dictionary "dictionary/words.txt")
+        random (Random. (.getTime (Date.)))
+        num-games 1000
 
         ;; our randomly chosen solutions
         solutions (for [index (range num-games)]
-                    (nth @*DICTIONARY* (.nextInt random (count @*DICTIONARY*))))
+                    [index (nth dictionary (.nextInt random (count dictionary)))])
 
         ;; a sequence of our lazily computed games
         games (for [solution solutions]
                 (do (info "")
-                    (info "SOLUTION:" solution)
-                    (play-game freq/guess @*DICTIONARY* (game solution 25))))]
+                    (info (str "GAME #" (inc (first solution))))
+                    (info "SOLUTION:" (second solution))
+                    (play-game freq/guess dictionary
+                               (game (second solution) 25)
+                               :output :log)))
 
-    ;; display some stats on our results
-    (let [average-score (float (/ (apply + (pmap :score games)) num-games))
-          lost (reduce + (pmap #(if (= "GAME_LOST" (:status %)) 1 0) games))
-          won (- num-games lost)]
-      (info "")
-      (info "RESULTS")
-      (info "  Average score:" average-score)
-      (info "            Won:" won)
-      (info "           Lost:" lost))
+        ;; compute some stats on the games
+        average-score (float (/ (apply + (pmap :score games)) num-games))
+        lost (reduce + (pmap #(if (= "GAME_LOST" (:status %)) 1 0) games))
+        won (- num-games lost)]
 
-    ;; shutdown any agents
-    (shutdown-agents)))
+    ;; display some stats on the games
+    (info "RESULTS")
+    (info "  Average score:" average-score)
+    (info "            Won:" won)
+    (info "           Lost:" lost))
+
+  ;; shutdown the agent thread pool
+  (shutdown-agents))
 
 (defn -main
   "Bootstraps the application"
