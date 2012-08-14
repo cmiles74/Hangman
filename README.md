@@ -46,6 +46,31 @@ Once you have the project built, you may generate a new test run.
 	tantru-; score=10; status=KEEP_GUESSING
 	tantrum; score=11; status=GAME_WON
 	...
+    RESULTS
+	  Average score: 7.9333334
+				Won: 15
+			   Lost: 0
+
+You can pass several command line parameters in order to customize the
+behavior of the application. You may specify your own dictionary of
+words, the number of games to play and provide the solutions for the
+games (comma separated, no spaces). If you provide your own list of
+solutions, the number of solutions provided will dictate how many
+games are played.
+
+    $ java -jar target/hangman-1.0-standalone.jar -s house,cards
+
+The incovation above will play two games, one for "house" and one for
+"cards". The flags are...
+
+* "-h" or "--help" will provide usage information
+* "-d" or "--dictionary" let you set the path to the word dictionary
+* "-n" or "--number" allows you to specify the number of games to play
+* "-s" or "--solutions" lets you provide a comma separated list of
+  solutions
+
+If no solutions are provided, a random set of solutions will be
+selected from the dictionary file.
 
 You may also run the test suite with Leiningen's "test" target. In
 addition to testing the provided functions, it will run through
