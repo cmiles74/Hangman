@@ -34,10 +34,17 @@ of words."}
   the specified criteria.
 
     dictionary  A sequence of solution words
+    blacklist-letters A set of letters that shouldn't be present in
+      matching words
     criteria  A sequence representing the current criteria, i.e.
       \"[nil nil l l nil]\""
-  [dictionary criteria]
-  (filter #(word-matches criteria %) dictionary))
+  [dictionary blacklist-letters criteria]
+  (filter #(not (nil? %))
+          (for [word dictionary :when (word-matches criteria word)]
+            (if (every? #(not (blacklist-letters %)) (set word))
+              word)))
+  ;(filter #(word-matches criteria %) dictionary)
+)
 
 (def query-words (memoize query-words-raw))
 
@@ -46,9 +53,11 @@ of words."}
   satisfy the criteria and do not appear in the supplied blacklist.
 
     dictionary  A sequence of solution words
-    blacklist  A set of words to be ignored
+    blacklist-words  A set of words to be excluded
+    blacklist-letters A set of letters that shouldn't be present in
+      matching words
     criteria   A sequence representing the current criteria, i.e.
       \"[nil nil l l nil]\""
-  [dictionary blacklist criteria]
-  (filter #(not (blacklist %))
-          (query-words dictionary criteria)))
+  [dictionary blacklist-letters blacklist-words criteria]
+  (filter #(not (blacklist-words %))
+          (query-words dictionary blacklist-letters criteria)))

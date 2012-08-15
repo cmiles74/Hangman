@@ -27,39 +27,44 @@ This will create a new standalone JAR file in the "target" directory.
 
 ## Running the Project
 
-Once you have the project built, you may generate a new test run.
+Once you have the project built, you may generate a new test run. It
+will play fifteen random games where a maximum of eleven incorrect
+guesses is allowed.
 
 	$ java -jar target/hangman-1.0-standalone.jar
-	Playing 15 random games of hangman...
 
-	SOLUTION: tantrum
+    GAME #1
+	SOLUTION: stepson
 	-------; score=0; status=KEEP_GUESSING
-	-------; score=1; status=KEEP_GUESSING
-	-------; score=2; status=KEEP_GUESSING
-	-------; score=3; status=KEEP_GUESSING
-	-a-----; score=4; status=KEEP_GUESSING
-	-a--r--; score=5; status=KEEP_GUESSING
-	-a--r--; score=6; status=KEEP_GUESSING
-	-a--r--; score=7; status=KEEP_GUESSING
-	ta-tr--; score=8; status=KEEP_GUESSING
-	tantr--; score=9; status=KEEP_GUESSING
-	tantru-; score=10; status=KEEP_GUESSING
-	tantrum; score=11; status=GAME_WON
-	...
-	Run time: 545ms
+	--e----; score=1; status=KEEP_GUESSING
+	s-e-s--; score=2; status=KEEP_GUESSING
+	ste-s--; score=3; status=KEEP_GUESSING
+	ste-so-; score=4; status=KEEP_GUESSING
+	ste-son; score=5; status=KEEP_GUESSING
+	stepson; score=6; status=GAME_WON
+	Run time: 987ms
+
+    ...play more games...
+
+	GAME #15
+	SOLUTION: oxo
+	---; score=0; status=KEEP_GUESSING
+	---; score=1; status=KEEP_GUESSING
+	o-o; score=2; status=KEEP_GUESSING
+	oxo; score=3; status=GAME_WON
+	Run time: 51ms
 	RESULTS
-		Average score: 8.933333
-				  Won: 15
-				 Lost: 0
-	Average Time/Game:419.13333ms
-		Shortest Game:104ms
+		Average score: 8.266666
+				  Won: 14
+				 Lost: 1
+	Average Time/Game: 490.13333ms
+		Shortest Game: 51ms
+
 
 You can pass several command line parameters in order to customize the
 behavior of the application. You may specify your own dictionary of
 words, the number of games to play and provide the solutions for the
-games (comma separated, no spaces). If you provide your own list of
-solutions, the number of solutions provided will dictate how many
-games are played.
+games (comma separated, no spaces).
 
     $ java -jar target/hangman-1.0-standalone.jar -s house,cards
 

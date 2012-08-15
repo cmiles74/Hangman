@@ -18,12 +18,14 @@ and it's strategies."}
 
     (testing "query-words"
       (let [matches (dict/query-words ["emily" "doily" "joanna" "miles"]
+                                      #{}
                                       [nil nil nil \l \y])]
         (is (and (= 2 (count matches))
                  (= #{"emily" "doily"} (set matches))))))
 
     (testing "query-words, fail"
       (let [matches (dict/query-words ["emily" "rianna" "joanna" "miles"]
+                                      #{}
                                       [nil nil nil \l \y])]
         (is (not (and (= 2 (count matches))
                       (= #{"emily" "doily"} (set matches)))))))))
@@ -39,7 +41,7 @@ and it's strategies."}
   (testing "guess-letter"
     (let [dictionary ["miles" "emily" "joanna" "derrida"]
           criteria [nil nil \i \l \y]
-          candidates (dict/candidate-words dictionary #{} criteria)
+          candidates (dict/candidate-words dictionary #{} #{} criteria)
           game (assoc (hangman/game "emily" 25)
                  :correct-guessed criteria)
           guess (freq/guess-letter candidates game)]
@@ -54,7 +56,7 @@ and it's strategies."}
   (testing "guess, letter"
     (let [dictionary ["miles" "emily" "joanna" "derrida" "doily"]
           criteria [nil nil nil \l nil]
-          candidates (dict/candidate-words dictionary #{} criteria)
+          candidates (dict/candidate-words dictionary #{} #{} criteria)
           game (assoc (hangman/game "emily" 25)
                  :correct-guessed criteria)
           guess (freq/guess candidates game)]
@@ -64,7 +66,7 @@ and it's strategies."}
   (testing "guess, word"
     (let [dictionary ["miles" "emily" "joanna" "derrida"]
           criteria [nil nil \i \l \y]
-          candidates (dict/candidate-words dictionary #{} criteria)
+          candidates (dict/candidate-words dictionary #{} #{} criteria)
           game (assoc (hangman/game "emily" 25)
                  :correct-guessed criteria)
           guess (freq/guess candidates game)]
@@ -80,7 +82,7 @@ and it's strategies."}
           games (for [solution solutions]
                   (hangman/play-game freq/guess
                                      DICTIONARY
-                                     (hangman/game solution 25)
+                                     (hangman/game solution 11)
                                      :output nil))
           average-score (float (/ (apply + (map :score games)) 15))]
 
@@ -90,5 +92,5 @@ and it's strategies."}
 
       (println "Average score:" average-score)
 
-      (is (and (> 1 (count (filter #(= "GAME_LOST" (:status %)) games)))
-               (> 8.7 average-score))))))
+      (is (and (> 2 (count (filter #(= "GAME_LOST" (:status %)) games)))
+               (> 8.667 average-score))))))

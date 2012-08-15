@@ -116,16 +116,33 @@
                                              (first guess))
 
                                        ;; the score for this letter
-                                       ;; in all positions
-                                       (+ (if (last (matches (first (nth guess 1))))
-                                            (last (matches (first (nth guess 1))))
-                                            0)
-                                          (last (nth guess 1)))]}))
+                                       ;; and it's largest position
+                                       ;; score
+                                       (if (last (matches (first (nth guess 1))))
+                                         (if (< (last (matches
+                                                       (first (nth guess 1))))
+                                                (last (nth guess 1)))
+                                           (last (nth guess 1))
+                                           (last (matches (first (nth guess 1)))))
+                                         (last (nth guess 1)))]}))
                             {} best-guesses))]
 
-        ;; return our best guess
-        [:letter (first (first combined))
-         (first (second (first combined)))]))))
+        (if (= #{nil} (set (:correct-guessed game)))
+
+          ;; prefer a vowel
+          (let [vowels (filter #(#{\a \e \i \o \u} (first %))
+                               combined)]
+            (if (seq? vowels)
+              [:letter (first (first vowels))
+               (first (second (first vowels)))]
+
+              ;; fall back to our best guess
+              [:letter (first (first combined))
+               (first (second (first combined)))]))
+
+          ;; return our best guess
+          [:letter (first (first combined))
+           (first (second (first combined)))])))))
 
 (defn guess-word
   "Returns a guess for the whole word. The guess will be a sequence
@@ -149,22 +166,26 @@
     game  A map of the current game state"
   [dictionary game]
   (let [candidate-words (dict/candidate-words dictionary
+                                              (:incorrect-guessed game)
                                               (:incorrect-words-guessed game)
                                               (:correct-guessed game))
-        letter-guess (guess-letter candidate-words game)
-        next-words (dict/query-words candidate-words
-                                (vec (map #(if ((set (last letter-guess)) %)
-                                             (second letter-guess)
-                                             (nth (:correct-guessed game) %))
-                                          (range (count (:solution game))))))]
 
+        letter-guess (guess-letter candidate-words game)]
     (cond
       (> 2 (count candidate-words))
       (guess-word candidate-words)
 
-      (and (< 0 (count next-words))
-           (> 2 (count next-words)))
-      (guess-word next-words)
+      (= (dec (:max-wrong-guesses game)) (:score game))
+      (guess-word
+
+       ;; assume our letter guess is correct and get the next round of
+       ;; candidate words
+       (dict/query-words candidate-words
+                         (:incorrect-guessed game)
+                         (vec (map #(if ((set (last letter-guess)) %)
+                                      (second letter-guess)
+                                      (nth (:correct-guessed game) %))
+                                   (range (count (:solution game)))))))
 
       :else
-      (guess-letter candidate-words game))))
+      letter-guess)))

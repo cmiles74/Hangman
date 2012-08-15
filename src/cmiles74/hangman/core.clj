@@ -167,7 +167,7 @@ against the computer (that is, this game is not interactive)."}
              ["-d" "--dictionary" "Path to an alternative dictionary file"]
              ["-n" "--number" "Number of random games to play" :default "15"]
              ["-s" "--solutions" "A comma separated list of solutions"]
-             ["-g" "--guesses" "Maximum number of guesses allowed" :default "9"])]
+             ["-g" "--guesses" "Maximum number of guesses allowed" :default "11"])]
     (cond
       (:help options)
       (println banner)
@@ -180,16 +180,15 @@ against the computer (that is, this game is not interactive)."}
 
             dictionary (dict/load-dictionary dict-path)
 
-            solution-words (if (:solutions options)
-                             (string/split (:solutions options) #","))
+            num-games (Integer/parseInt (:number options))
 
-            solutions (if solution-words
-                        (for [index (range (count solution-words))]
-                          [index (nth solution-words
-                                      (.nextInt random (count solution-words)))])
-                        (for [index (range (Integer/parseInt (:number options)))]
-                          [index (nth dictionary
-                                      (.nextInt random (count dictionary)))]))
+            solution-words (if (:solutions options)
+                             (string/split (:solutions options) #",")
+                             dictionary)
+
+            solutions (for [index (range num-games)]
+                        [index (nth solution-words
+                                    (.nextInt random (count solution-words)))])
 
             guesses (Integer/parseInt (:guesses options))
 
