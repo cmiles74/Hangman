@@ -85,9 +85,9 @@
 
                       ;; map our frequencies to letter positions
                       (apply merge
-                             (map  #(if (seq (nth candidates %))
-                                      (hash-map % (first (nth candidates %))))
-                                   (range (count candidates)))))]
+                             (map #(if (first %1) (hash-map %2 (first %1)))
+                                  candidates
+                                  (range (count candidates)))))]
 
     ;; only proceed if we have some possible guesses
     (if (seq best-guesses)
