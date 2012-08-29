@@ -51,11 +51,12 @@
     letters already guessed incorrectly criteria A sequence
     representing the current criteria, i.e.  \"[nil nil l l nil]\""
   [frequencies blacklist criteria]
-  (map #(filter (fn [frequency-this]
-                  (not (or (blacklist (first frequency-this))
-                           ((into #{} criteria) (first frequency-this)))))
-                (nth frequencies %))
-       (range (count criteria))))
+  (let [criteria-set (set criteria)]
+    (map (fn [freq]
+           (filter #(not (or (blacklist (first %1))
+                             (criteria-set (first %1))))
+                   freq))
+         frequencies)) )
 
 (defn guess-letter
   "Returns a guess for a letter. The guess will be a sequence where
@@ -75,10 +76,6 @@
         candidates (candidate-frequencies frequencies
                                           (:incorrect-guessed game)
                                           (:correct-guessed game))
-
-        ;; collect the indexes with correct guesses
-        good-indices (map #(if (not (nil? (nth (:correct-guessed game) %)))%)
-                          (range (count (:solution game))))
 
         ;; compile a list of best guesses for each letter position
         best-guesses (sort
@@ -171,6 +168,7 @@
                                               (:correct-guessed game))
 
         letter-guess (guess-letter candidate-words game)]
+
     (cond
       (> 2 (count candidate-words))
       (guess-word candidate-words)
@@ -182,10 +180,9 @@
        ;; candidate words
        (dict/query-words candidate-words
                          (:incorrect-guessed game)
-                         (vec (map #(if ((set (last letter-guess)) %)
-                                      (second letter-guess)
-                                      (nth (:correct-guessed game) %))
-                                   (range (count (:solution game)))))))
+                         (reduce #(assoc %1 %2 (second letter-guess))
+                                 (:correct-guessed game)
+                                 (last letter-guess))))
 
       :else
       letter-guess)))

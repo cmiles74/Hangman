@@ -25,9 +25,10 @@ of words."}
 
                ;; match each word letter against its matching criteria
                ;; position
-               (map #(or (nil? (nth criteria %))
-                         (= (nth criteria %) (nth word %)))
-                    (range (count criteria))))))
+               (map #(or (nil? %1)
+                         (= %1 %2))
+                    criteria
+                    word))))
 
 (defn query-words-raw
   "Returns a sequence of words in the provided dictionary that match
@@ -42,9 +43,7 @@ of words."}
   (filter #(not (nil? %))
           (for [word dictionary :when (word-matches criteria word)]
             (if (every? #(not (blacklist-letters %)) (set word))
-              word)))
-  ;(filter #(word-matches criteria %) dictionary)
-)
+              word))))
 
 (def query-words (memoize query-words-raw))
 

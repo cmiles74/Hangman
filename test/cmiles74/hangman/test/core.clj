@@ -76,9 +76,11 @@ and it's strategies."}
 (deftest core
 
   (testing "Sample Run"
-    (let [solutions ["comaker" "cumulative" "eruptive" "factual" "monadism" "mus"
+    (let [solutions ["comaker"
+                     "cumulative" "eruptive" "factual" "monadism" "mus"
                      "nagging" "oses" "remembered" "spodumenes" "stereoisomers"
-                     "toxics" "trichromats" "triose" "uninformed"]
+                     "toxics" "trichromats" "triose" "uninformed"
+                     ]
           games (for [solution solutions]
                   (hangman/play-game freq/guess
                                      DICTIONARY
